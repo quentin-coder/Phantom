@@ -1,0 +1,96 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Snake — Phantom</title>
+  <style>
+    html,body { height:100%; margin:0; background:#0a0a0f; color:#fff; font-family:sans-serif; }
+    .wrap { display:flex; flex-direction:column; align-items:center; padding:16px; }
+    canvas { background:#111; border:3px solid #6efeff; border-radius:8px; }
+    .hud { margin-top:8px; }
+    button { padding:8px 12px; border-radius:6px; border:none; background:#1d1d2f; color:#fff; cursor:pointer;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <canvas id="c" width="400" height="400"></canvas>
+    <div class="hud">
+      <span id="score">Score: 0</span>
+      <button id="restart">Restart</button>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const box = 20;
+    let snake = [{x:9*box, y:9*box}];
+    let dir = {x:1, y:0};
+    let food = spawnFood();
+    let score = 0;
+    let running = true;
+    let timer;
+
+    function spawnFood(){
+      return { x: Math.floor(Math.random()*20)*box, y: Math.floor(Math.random()*20)*box };
+    }
+
+    document.addEventListener('keydown', e => {
+      if(e.key === 'ArrowUp' && dir.y === 0) dir = {x:0,y:-1};
+      if(e.key === 'ArrowDown' && dir.y === 0) dir = {x:0,y:1};
+      if(e.key === 'ArrowLeft' && dir.x === 0) dir = {x:-1,y:0};
+      if(e.key === 'ArrowRight' && dir.x === 0) dir = {x:1,y:0};
+    });
+
+    function draw(){
+      ctx.fillStyle = '#111';
+      ctx.fillRect(0,0,400,400);
+      // draw food
+      ctx.fillStyle = 'red';
+      ctx.fillRect(food.x, food.y, box, box);
+      // draw snake
+      snake.forEach((s,i) => {
+        ctx.fillStyle = i===0 ? '#6efeff' : '#9a6bff';
+        ctx.fillRect(s.x, s.y, box, box);
+      });
+      // move
+      const head = { x: snake[0].x + dir.x*box, y: snake[0].y + dir.y*box };
+      // wrap around
+      if(head.x < 0) head.x = 380;
+      if(head.y < 0) head.y = 380;
+      if(head.x > 380) head.x = 0;
+      if(head.y > 380) head.y = 0;
+      // collision with self
+      if(snake.some(s => s.x === head.x && s.y === head.y)){
+        running = false;
+        clearInterval(timer);
+        document.getElementById('score').textContent = 'Game Over — Score: ' + score;
+        return;
+      }
+      snake.unshift(head);
+      if(head.x === food.x && head.y === food.y){
+        score++;
+        food = spawnFood();
+      } else {
+        snake.pop();
+      }
+      document.getElementById('score').textContent = 'Score: ' + score;
+    }
+
+    function start(){
+      // reset state
+      snake = [{x:9*box, y:9*box}];
+      dir = {x:1,y:0};
+      food = spawnFood();
+      score = 0;
+      running = true;
+      document.getElementById('score').textContent = 'Score: 0';
+      clearInterval(timer);
+      timer = setInterval(draw, 100);
+    }
+
+    document.getElementById('restart').onclick = start;
+    start();
+  </script>
+</body>
+</html>
